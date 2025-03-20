@@ -1,0 +1,94 @@
+
+clc;
+clear;
+close all;
+% Load the CSV file (clck signal)
+ data1 = readmatrix('FET_in32bps.csv');
+t0 = data1(:,1);
+ fet_in = data1(:,2);
+ fet_in = fet_in / max(abs(fet_in));
+ % am_signal = data1(:, 3);
+ % am_signal = am_signal / max(abs(am_signal));
+% Load the AM signal from the CSV file
+data = readmatrix('filtered_AM_signal_32bps_05m.csv'); % Replace with your actual CSV file name % demodulated_signal_16MHz.csv
+t = data(:, 1);      % Load the signal from the CSV file
+am_signal = data(:, 2);
+am_signal = am_signal / max(abs(am_signal));
+   fs = 21e9;                           % Sampling frequency (adjust based on your data)
+  % t = (0:length(am_signal)-1)/fs;     % Generate a time vector
+
+% Apply Envelope Detection (Hilbert Transform)
+ % envelope = abs(hilbert(am_signal)); % Extract the envelope
+
+%optional1
+rectified_signal = abs(am_signal);
+rectified_signal = rectified_signal / max(abs(rectified_signal));
+ fm =50e6; % Baseband signal bandwidth (adjust based on your data)
+[b, a] = butter(5, 1.5*fm/fs); % Design a Butterworth low-pass filter
+filtered_signal = filtfilt(b, a, rectified_signal);
+filtered_signal = filtered_signal / max(abs(filtered_signal));
+  %optional2
+ % Compute the envelope using Hilbert transform
+analytic_signal = hilbert(am_signal); % Compute the analytic signal
+envelope_signal = abs(analytic_signal); % Extract the envelope
+% Low-pass filter to extract modulating signal
+fc = 40e6; % Cutoff frequency (slightly above 16 MHz to preserve modulating signal)
+[b, a] = butter(5, fc / (fs / 2), 'low'); % 6th-order Butterworth filter
+modulating_signal = filtfilt(b, a, envelope_signal); % Apply the filter
+ % Converts to 0 or 1
+ threshold = 0.6;
+  binary_signal = modulating_signal > threshold;
+ % Define a smoothing kernel (e.g., Gaussian or moving average)
+rise_fall_duration = 200; % Define rise/fall time in samples
+kernel = ones(1, rise_fall_duration) / rise_fall_duration; % Moving average kernel
+%  Smooth the binary signal
+smoothed_signal = conv(binary_signal, kernel, 'same'); % Apply convolution
+%  Plot the Results
+figure;
+subplot(3, 1, 1);
+plot(t, am_signal);
+title('AM Signal after Filtering');
+xlabel('Time (ns)');
+xlim([230 780]);
+ylabel('Normalized');
+subplot(3, 1, 2);
+plot(t, rectified_signal);
+title('Rectified AM Signal');
+xlabel('Time (ns)');
+xlim([230 780]);
+ylabel('Normalized');
+subplot(3, 1, 3);
+ plot(t0+0, fet_in, 'b',t,smoothed_signal,'r');
+ % plot(t, smoothed_signal,'r');
+title('FET (HT) Input');
+ legend('Original signal', 'Demodulated signal')
+xlabel('Time (ns)');
+xlim([230 780]);
+% ylim([0.05 0.25]);
+ylabel('Normalized');
+
+ %export ploted data
+% h = findobj(gca, 'Type', 'line'); % Finds all line objects in the figure
+% % Extract data from the plot
+% x_data = get(h, 'XData'); % Get X data
+% y_data = get(h, 'YData'); % Get Y data
+% 
+% % Combine data into a matrix
+% data = [x_data(:), y_data(:)]; % Combine as two columns (X, Y)
+% 
+% % Save data to CSV
+% writematrix(data, 'D:\matlab\LMS_filter\plot_data.csv'); % Save as CSV file
+% disp('Data has been exported to plot_data.csv');
+% 
+% % Assume 'time' and 'err' are the variables plotted
+% time_ns = t0; % Ensure 'time' is in nanoseconds as the label suggests
+% err_mv = smoothed_signal;   % Ensure 'err' is in millivolts as the label suggests
+% 
+% % Combine the data into a table
+% data = table(time_ns(:), err_mv(:), 'VariableNames', {'Time_ns', 'Err_mV'});
+% 
+% % Export the table to a CSV file
+% writetable(data, 'D:\matlab\LMS_filter\FilteredSignalData.csv');
+
+% Display a message
+% disp('Data has been exported to FilteredSignalData.csv');

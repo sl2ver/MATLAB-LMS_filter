@@ -1,0 +1,107 @@
+
+clc;
+clear;
+close all;
+% Load the CSV file (clck signal)
+ data = readmatrix('FET_in32bps.csv');
+t0 = data(:,1);
+ original_signal = data(:,2);
+ % Load the CSV file (clck signal)
+ data1 = readmatrix('demodulated_signal_32bps.csv');
+t = data1(:,1);
+ demodulated_signal = data1(:,2);
+% Normalize signals (optional but recommended)
+% original_signal = original_signal - mean(original_signal); % Remove DC offset
+original_signal = original_signal / max(abs(original_signal)); % Normalize amplitude
+
+% demodulated_signal = demodulated_signal - mean(demodulated_signal); % Remove DC offset
+demodulated_signal = demodulated_signal / max(abs(demodulated_signal)); % Normalize amplitude
+% Compute cross-correlation
+[correlation, lags] = xcorr(original_signal, demodulated_signal, 'coeff');
+
+% Find the maximum correlation
+[~, maxIdx] = max(correlation);
+timeLag = lags(maxIdx); % Lag at maximum correlation % 
+
+% Plot the cross-correlation
+%  figure(1);
+%  plot(t0, original_signal);
+%  % plot(t, smoothed_signal,'r');
+% title('Original signal');
+% xlabel('Time (ns)');
+% % xlim([65 250]);
+% ylim([0 1]);
+% ylabel('Normalized');
+%  grid on;
+%  % hold on
+%   figure(2);
+% plot(t, demodulated_signal);
+%  % plot(t, smoothed_signal,'r');
+% title('Demodulated signal');
+% xlabel('Time (ns)');
+% % xlim([65 250]);
+% % ylim([0.05 0.25]);
+% ylabel('Normalized');
+%  grid on;
+%   figure(3);
+ plot(lags, correlation);
+ title('Cross correlation Output');
+xlabel('Lag (samples)');
+ylabel('Correlation coefficient');
+% xlim([-1.5e04 1.5e04]);
+ylim([0 1]);
+% title('Cross-Correlation between Original and Demodulated Signals');
+ grid on;
+ % hold off
+% Display results
+disp(['Maximum correlation coefficient: ', num2str(correlation(maxIdx))]);
+disp(['Lag (in samples): ', num2str(timeLag)]);
+
+
+
+% Parameters
+% fs = 1000;  % Sampling frequency (Hz)
+% T = 1;      % Signal duration (seconds)
+% t = 0:1/fs:T-1/fs; % Time vector
+% 
+% % Generate two square waves
+% f = 5; % Frequency of square wave (Hz)
+% sq1 = square(2*pi*f*t); % First square wave
+% sq2 = square(2*pi*f*t + pi/4); % Second square wave (phase shift)
+% 
+% % Compute cross-correlation
+% [xcorr_result, lag] = xcorr(sq1, sq2, 'normalized');
+% 
+% % Convert lag to time
+% lag_time = lag / fs;
+% 
+% % Plot signals
+% figure;
+% subplot(3,1,1);
+% plot(t, sq1, 'b', 'LineWidth', 1.5);
+% hold on;
+% plot(t, sq2, 'r', 'LineWidth', 1.5);
+% title('Two Square Waves');
+% xlabel('Time (s)');
+% ylabel('Amplitude');
+% legend('Square Wave 1', 'Square Wave 2');
+% grid on;
+% 
+% % Plot Cross-Correlation
+% subplot(3,1,2);
+% plot(lag_time, xcorr_result, 'k', 'LineWidth', 1.5);
+% title('Cross-Correlation of Square Waves');
+% xlabel('Lag (s)');
+% ylabel('Correlation');
+% grid on;
+% 
+% % Highlight sinusoidal pattern
+% subplot(3,1,3);
+% plot(lag_time, xcorr_result, 'k', 'LineWidth', 1.5);
+% hold on;
+% plot(lag_time, cos(2*pi*f*lag_time), '--r', 'LineWidth', 1.2); % Approximate sinusoidal pattern
+% title('Comparison with Sinusoidal Wave');
+% xlabel('Lag (s)');
+% ylabel('Amplitude');
+% legend('Cross-Correlation', 'Reference Sine Wave');
+% grid on;
